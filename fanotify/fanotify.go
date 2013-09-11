@@ -89,6 +89,8 @@ const (
 
 	/* helper events */
 	FAN_CLOSE = FAN_CLOSE_WRITE | FAN_CLOSE_NOWRITE /* close */
+  
+  FAN_LW_EVENTS = FAN_OPEN | FAN_CLOSE_WRITE
 
 	/*
 	 * All of the events - we build the list by hand so that we can add flags in
@@ -139,14 +141,15 @@ type response struct {
 // The File member needs to be Closed after usage, to prevent
 // an Fd leak
 type EventMetadata struct {
-	Len         uint32
-	Version     uint8
-	Reserved    uint8
-	MetadataLen uint16
-	Mask        uint64
-	File        *os.File
-	FileName    string
-	Pid         int32
+	Len           uint32
+	Version       uint8
+	Reserved      uint8
+	MetadataLen   uint16
+	Mask          uint64
+	File          *os.File
+	FileName      string
+	Pid           int32
+  InodeNumber   uint64
 }
 
 // A notify handle, used by all notify functions
@@ -177,8 +180,10 @@ func (nd *NotifyFD) GetEvent() (*EventMetadata, error) {
 		return nil, err
 	}
 
-	file_name, _ := os.Readlink(fmt.Sprintf("/proc/self/fd/%d", ev.Fd))
-	res := &EventMetadata{ev.Len, ev.Version, ev.Reserved, ev.MetadataLen, ev.Mask, os.NewFile(uintptr(ev.Fd), ""), file_name, ev.Pid}
+  file_name, _ := os.Readlink(fmt.Sprintf("/proc/self/fd/%d", ev.Fd))
+  fi, _ := os.Stat(file_name)
+  inode_number := fi.Sys().(*syscall.Stat_t).Ino
+	res := &EventMetadata{ev.Len, ev.Version, ev.Reserved, ev.MetadataLen, ev.Mask, os.NewFile(uintptr(ev.Fd), ""), file_name, ev.Pid, inode_number}
 
 	return res, nil
 }
