@@ -25,7 +25,7 @@ import (
 )
 
 var (
-	_log, s_err = syslog.New(syslog.LOG_ERR, "hpr")
+	_log, s_err = syslog.New(syslog.LOG_ERR, "gomhotep")
 )
 
 func Check(err error, message string) {
@@ -40,6 +40,14 @@ func Log(message string) {
 	CheckPanic(s_err, "Unable to write syslog message")
 	_log.Info(message)
 	defer _log.Close()
+}
+
+func Debug(message string, debug bool) {
+	if debug {
+		CheckPanic(s_err, "Unable to write syslog message")
+		_log.Debug(message)
+		defer _log.Close()
+	}
 }
 
 func check(err error, message string, _panic bool) {

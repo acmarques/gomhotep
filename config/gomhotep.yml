@@ -1,0 +1,20 @@
+log:
+  debug_enabled: true
+scan:
+  # Max number of cpus to use on scanning
+  num_cpus: 2
+    
+  # Number of scanning processes
+  num_routines: 5
+
+  # Mount point to monitor with fanotify.
+  # Note that events on the whole mount point will get scanned
+  mount_point: /home/ncode
+
+  # Max file size to scan in bytes
+  av_max_file_size: 2097152
+
+  # Options are ALERT, MOVE or REMOVE
+  av_action_when_malware_found: MOVE
+  # If av_action_when_malware_found is MOVE, specify base path
+  av_move_to_base_folder: /home/quarantines/

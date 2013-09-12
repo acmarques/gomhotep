@@ -89,8 +89,6 @@ const (
 
 	/* helper events */
 	FAN_CLOSE = FAN_CLOSE_WRITE | FAN_CLOSE_NOWRITE /* close */
-  
-  FAN_LW_EVENTS = FAN_OPEN | FAN_CLOSE_WRITE
 
 	/*
 	 * All of the events - we build the list by hand so that we can add flags in

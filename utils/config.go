@@ -32,9 +32,9 @@ type Config struct {
 func NewConfig() Config {
 	cfg := Config{}
 
-	config_file := os.Getenv("HPR_CONF")
+	config_file := os.Getenv("GOMHOTEP_CONF")
 	if strings.EqualFold(config_file, "") {
-		config_file = "/etc/hpr/hpr.yml"
+		config_file = "/etc/gomhotep/gomhotep.yml"
 	}
 	f, err := ioutil.ReadFile(config_file)
 	CheckPanic(err, "Unable to open YAML file")
