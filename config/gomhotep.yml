@@ -5,7 +5,7 @@ scan:
   num_cpus: 2
     
   # Number of scanning processes
-  num_routines: 5
+  num_routines: 3
 
   # Mount point to monitor with fanotify.
   # Note that events on the whole mount point will get scanned
@@ -18,3 +18,23 @@ scan:
   av_action_when_malware_found: MOVE
   # If av_action_when_malware_found is MOVE, specify base path
   av_move_to_base_folder: /home/quarantines/
+amqp:  
+    # Set True to log on syslog AND AMPQ server
+    amqp_enabled: true
+    # AMQP server listening URL
+    amqp_url: 'amqp://10.20.121.27:5672'
+    amqp_user: 'guest'
+    amqp_pass: 'securityisanillusi0n'
+    connection_pool_enabled: False
+    connection_pool_size: 10
+    # Number of connection tries if disconnected, before message is discarded
+    connection_max_tries: 2
+    # Wait time (in seconds) beetween each connection retry
+    time_beetween_tries: 0.250
+    # Time to wait before message is removed from AMQP Queue i
+    # (Graylog consumes messages, but do not remove then from queues)
+    message_ttl: 90000 
+    # AMQP Server Queue name
+    # (Remember to use the same binding on Graylog)
+    rabbitMQ_Queue: 'imhotep'
+    queue_Type: 'direct'

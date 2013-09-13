@@ -15,12 +15,15 @@ const (
 	AT_FDCWD = -100
 )
 
+var (
+  cfg = utils.NewConfig()
+  debug, _ = strconv.ParseBool(cfg.Options["log"]["debug_enabled"])
+  num_cpus, _ = strconv.Atoi(cfg.Options["scan"]["num_cpus"])
+  num_routines, _ = strconv.Atoi(cfg.Options["scan"]["num_routines"])
+)
 
 
-func clamavWorker(in chan *fanotify.EventMetadata, cache *gocache.Cache, cfg utils.Config, number int){
-  debug, err := strconv.ParseBool(cfg.Options["log"]["debug_enabled"])
-  utils.CheckPanic(err, "Unable to get debug configuration")
-  
+func clamavWorker(in chan *fanotify.EventMetadata, cache *gocache.Cache, number int){  
   utils.Debug(fmt.Sprintf("[%d] initializing ClamAV database...", number), debug)
   engine := clamav.New()
 	sigs, err := engine.Load(clamav.DBDir(), clamav.DbStdopt)
@@ -49,10 +52,7 @@ func clamavWorker(in chan *fanotify.EventMetadata, cache *gocache.Cache, cfg uti
 }
 
 func main() {
-  cfg := utils.NewConfig()
-  
-  num_cpus, err := strconv.Atoi(cfg.Options["scan"]["num_cpus"])
-  utils.CheckPanic(err, "Unable to parse configuration: number of cpus to use")
+
   runtime.GOMAXPROCS(num_cpus)
   
 	fan, err := fanotify.Initialize(fanotify.FAN_CLASS_NOTIF, fanotify.FAN_CLOEXEC)
@@ -62,10 +62,8 @@ func main() {
   cache := gocache.New(0, 0)
   channel := make(chan *fanotify.EventMetadata)
   
-  num_routines, err := strconv.Atoi(cfg.Options["scan"]["num_routines"])
-  utils.CheckPanic(err, "Unable to parse configuration: number of scanning routines")
   for i := 0; i < num_routines; i++ {
-    go clamavWorker(channel, cache, cfg, i)
+    go clamavWorker(channel, cache, i)
   }
 
 	for {
