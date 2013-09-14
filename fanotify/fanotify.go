@@ -148,6 +148,8 @@ type EventMetadata struct {
 	FileName      string
 	Pid           int32
   InodeNumber   uint64
+  IsDir         bool
+  Size          int64 
 }
 
 // A notify handle, used by all notify functions
@@ -179,9 +181,18 @@ func (nd *NotifyFD) GetEvent() (*EventMetadata, error) {
 	}
 
   file_name, _ := os.Readlink(fmt.Sprintf("/proc/self/fd/%d", ev.Fd))
-  fi, _ := os.Stat(file_name)
-  inode_number := fi.Sys().(*syscall.Stat_t).Ino
-	res := &EventMetadata{ev.Len, ev.Version, ev.Reserved, ev.MetadataLen, ev.Mask, os.NewFile(uintptr(ev.Fd), ""), file_name, ev.Pid, inode_number}
+  inode_number := uint64(0)
+  
+  fi, err := os.Stat(file_name)
+  if err == nil {
+    info := fi.Sys()
+    if info != nil {
+      inode_number = info.(*syscall.Stat_t).Ino
+    }
+  } else {
+    return nil, err
+  }
+	res := &EventMetadata{ev.Len, ev.Version, ev.Reserved, ev.MetadataLen, ev.Mask, os.NewFile(uintptr(ev.Fd), ""), file_name, ev.Pid, inode_number, fi.IsDir(), fi.Size()}
 
 	return res, nil
 }

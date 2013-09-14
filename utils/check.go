@@ -37,16 +37,18 @@ func CheckPanic(err error, message string) {
 }
 
 func Log(message string) {
-	CheckPanic(s_err, "Unable to write syslog message")
-	_log.Info(message)
-	defer _log.Close()
+  fmt.Println(message)
+  // CheckPanic(s_err, "Unable to write syslog message")
+  // _log.Info(message)
+  // defer _log.Close()
 }
 
 func Debug(message string, debug bool) {
 	if debug {
-		CheckPanic(s_err, "Unable to write syslog message")
-		_log.Debug(message)
-		defer _log.Close()
+    fmt.Println(message)
+    // CheckPanic(s_err, "Unable to write syslog message")
+    // _log.Debug(message)
+    // defer _log.Close()
 	}
 }
 
