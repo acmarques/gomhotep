@@ -15,6 +15,8 @@ const (
 )
 
 var (
+  conn utils.AMQPConnection
+  
   cfg = utils.NewConfig()
   debug, _ = strconv.ParseBool(cfg.Options["log"]["debug_enabled"])
   num_cpus, _ = strconv.Atoi(cfg.Options["scan"]["num_cpus"])
@@ -86,6 +88,14 @@ func main() {
   for i := 0; i < num_routines; i++ {
     go clamavWorker(channel, cache, i)
   }
+
+
+  // conn.SetupAMQPBroker()
+  // go conn.ReconnectOnClose()
+  // defer conn.Close()
+  // 
+  // msg := utils.Graylog2ParseLog("Starting")
+  // conn.SendAMQP(msg)
 
 	for {
 		ev, err := fan.GetEvent()
