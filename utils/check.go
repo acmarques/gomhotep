@@ -26,6 +26,7 @@ import (
 
 var (
 	_log, s_err = syslog.New(syslog.LOG_ERR, "gomhotep")
+  conn AMQPConnection
 )
 
 func Check(err error, message string) {
@@ -51,6 +52,14 @@ func Debug(message string, debug bool) {
     // defer _log.Close()
 	}
 }
+
+func DebugAMQP(message string, conn AMQPConnection, debug bool) {
+	if debug {
+    msg := Graylog2ParseLog(message)
+    go conn.SendAMQP(msg)  
+	}
+}
+
 
 func check(err error, message string, _panic bool) {
 	if err != nil {

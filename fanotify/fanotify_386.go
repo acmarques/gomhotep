@@ -12,21 +12,21 @@
 // ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 // OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-package fanotify
-
-import (
-	"syscall"
-	"unsafe"
-)
-
-// Add/Delete/Modify an Fanotify mark
-func (nd *NotifyFD) Mark(flags int, mask uint64, dfd int, path string) error {
-	_, _, errno := syscall.Syscall6(syscall.SYS_FANOTIFY_MARK, uintptr(nd.f.Fd()), uintptr(flags), uintptr(mask), uintptr(mask>>32), uintptr(dfd), uintptr(unsafe.Pointer(syscall.StringBytePtr(path))))
-
-	var err error
-	if errno != 0 {
-		err = errno
-	}
-
-	return err
-}
+// package fanotify
+// 
+// import (
+//   "syscall"
+//   "unsafe"
+// )
+// 
+// // Add/Delete/Modify an Fanotify mark
+// func (nd *NotifyFD) Mark(flags int, mask uint64, dfd int, path string) error {
+//   _, _, errno := syscall.Syscall6(syscall.SYS_FANOTIFY_MARK, uintptr(nd.f.Fd()), uintptr(flags), uintptr(mask), uintptr(mask>>32), uintptr(dfd), uintptr(unsafe.Pointer(syscall.StringBytePtr(path))))
+// 
+//   var err error
+//   if errno != 0 {
+//     err = errno
+//   }
+// 
+//   return err
+// }

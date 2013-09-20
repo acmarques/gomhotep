@@ -24,4 +24,5 @@ amqp:
     # AMQP server listening URL
     amqp_url: 'amqp://imhotep:imhotep@10.20.81.38:5672'
     amqp_queue: 'imhotep'
-    message_ttl: 90000 
+    message_ttl: 90000
+    hostname: "hmteste" 

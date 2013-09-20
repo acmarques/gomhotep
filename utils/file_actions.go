@@ -4,6 +4,9 @@ import (
   "os"
   "fmt"
   "io"
+  "strings"
+  "errors"
+  "os/exec"
   "path/filepath"
 )
 
@@ -17,8 +20,11 @@ func RemoveFile(filePath string) (error){
 }
 
 func MoveFile(fileFullPath string, baseDir string) (error){
-  dir := filepath.Dir(fileFullPath)
+  if !strings.HasPrefix(fileFullPath, "/home/"){
+    return errors.New("Cannot move file, invalid origin")
+  }
   
+  dir := filepath.Dir(fileFullPath)
   quarantineFullPath := fmt.Sprintf("%s/%s", baseDir, dir)
   newName := fmt.Sprintf("%s%s", baseDir, fileFullPath)
   
@@ -33,11 +39,14 @@ func MoveFile(fileFullPath string, baseDir string) (error){
       Log(fmt.Sprintf("Error reading file to move to Quarantine %s: %v", fileFullPath, err))
       return err
   }
-  df, err := os.OpenFile(newName, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
+  defer sf.Close() 
+  
+  df, err := os.OpenFile(newName, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0000)
   if err != nil {
     Log(fmt.Sprintf("Error creating file on Quarantine %s: %v", newName, err))
     return err
   }
+  defer df.Close() 
   
   _, err = io.Copy(df, sf)
   if err != nil{
@@ -48,3 +57,4 @@ func MoveFile(fileFullPath string, baseDir string) (error){
   }
 
 }
+

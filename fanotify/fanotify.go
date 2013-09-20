@@ -149,6 +149,7 @@ type EventMetadata struct {
 	Pid           int32
   InodeNumber   uint64
   IsDir         bool
+  IsRegular     bool
   Size          int64 
 }
 
@@ -190,9 +191,13 @@ func (nd *NotifyFD) GetEvent() (*EventMetadata, error) {
       inode_number = info.(*syscall.Stat_t).Ino
     }
   } else {
+    syscall.Close(int(ev.Fd))
     return nil, err
   }
-	res := &EventMetadata{ev.Len, ev.Version, ev.Reserved, ev.MetadataLen, ev.Mask, os.NewFile(uintptr(ev.Fd), ""), file_name, ev.Pid, inode_number, fi.IsDir(), fi.Size()}
+  
+	res := &EventMetadata{ev.Len, ev.Version, ev.Reserved, ev.MetadataLen, ev.Mask, os.NewFile(uintptr(ev.Fd), ""), file_name, ev.Pid, inode_number, fi.IsDir(), fi.Mode().IsRegular(), fi.Size()}
+  
+  syscall.Close(int(ev.Fd))
 
 	return res, nil
 }

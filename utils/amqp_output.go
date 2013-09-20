@@ -21,8 +21,6 @@ import (
 	"encoding/json"
 	"github.com/streadway/amqp"
 	"sync"
-	"fmt"
-	"os"
 	"time"
   "strconv"
 )
@@ -32,6 +30,7 @@ var (
   amqp_uri = cfg.Options["amqp"]["amqp_url"]
   amqp_queue = cfg.Options["amqp"]["amqp_queue"]
   amqp_message_ttl = cfg.Options["amqp"]["message_ttl"]
+  hostname = cfg.Options["amqp"]["hostname"]
 )
 
 
@@ -65,11 +64,9 @@ func Graylog2ParseLog(line string) Graylog2Parsed {
   	now := time.Now()
   	parsed.Timestamp = now.Unix()
   	parsed.Version = "1.0"
-  	hostname, err := os.Hostname()
-  	CheckPanic(err, fmt.Sprintf("Unable to get my hostname"))
   	parsed.Host = hostname
   	
-		parsed.Facility = "Syslog"
+		parsed.Facility = "gomhotep"
 		parsed.Level = 6
 		parsed.ShortMessage = line
 
@@ -96,7 +93,7 @@ func setup(uri, queue string) (*amqp.Connection, *amqp.Channel, error) {
 	}
 
   message_ttl, _ := strconv.Atoi(amqp_message_ttl)
-  args := amqp.Table{"x-message-ttl": message_ttl}
+  args := amqp.Table{"x-message-ttl": int32(message_ttl)}
 	_, err = pub.QueueDeclare(queue, true, false, false, false, args)
 	if err != nil {
 		Check(err, "Unable to declare queue")
@@ -136,7 +133,7 @@ func (c *AMQPConnection) SendAMQP(parsed Graylog2Parsed) (err error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.pub != nil {
-		err = c.pub.Publish(c.Queue, c.Queue, false, false, msg)
+		err = c.pub.Publish(amqp_queue, amqp_queue, false, false, msg)
 		if err != nil {
 			Check(err, "Unable to publish message")
 		}

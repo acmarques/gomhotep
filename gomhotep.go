@@ -30,7 +30,8 @@ var (
 )
 
 
-func clamavWorker(in chan *fanotify.EventMetadata, cache *gocache.Cache, number int){  
+func clamavWorker(in chan *fanotify.EventMetadata, cache *gocache.Cache, conn utils.AMQPConnection, number int){  
+  
   utils.Debug(fmt.Sprintf("[%d] initializing ClamAV database...", number), debug)
   
   engine := clamav.New()
@@ -43,16 +44,18 @@ func clamavWorker(in chan *fanotify.EventMetadata, cache *gocache.Cache, number 
   
   for ev := range in {          
      utils.Debug(fmt.Sprintf("[%d] File: %s, Size %d", number, ev.FileName, ev.Size), debug)
+     utils.DebugAMQP(fmt.Sprintf("[%d] File: %s, Size %d", number, ev.FileName, ev.Size), conn, debug) 
     
     _, found := cache.Get(fmt.Sprintf("%d", ev.InodeNumber))
   
-    if ((!found || ev.Mask == fanotify.FAN_CLOSE_WRITE) && !ev.IsDir && ev.Size > 0 && ev.Size < av_max_file_size){
+    if ((!found || ev.Mask == fanotify.FAN_CLOSE_WRITE) && !ev.IsDir && ev.IsRegular && ev.Size > 0 && ev.Size < av_max_file_size){
       cache.Set(fmt.Sprintf("%d", ev.InodeNumber), 1, -1)
       
       utils.Debug(fmt.Sprintf("[%d] Scanning %s...", number, ev.FileName), debug)
   		virus, _, err := engine.ScanFile(ev.FileName, clamav.ScanStdopt)
   		if virus != "" {
   			utils.Log(fmt.Sprintf("[%d] virus found in %s: %s", number, ev.FileName, virus))
+        utils.DebugAMQP(fmt.Sprintf("[%d] malwareabdo found in %s: %s", number, ev.FileName, virus), conn, debug) 
         if av_action == "MOVE"{
           err := utils.MoveFile(ev.FileName, av_quarantine_dir)
           if err != nil{
@@ -72,10 +75,14 @@ func clamavWorker(in chan *fanotify.EventMetadata, cache *gocache.Cache, number 
       }
     }
   }
+  
 }
 
 func main() {
-
+  
+  conn.SetupAMQPBroker()
+  go conn.ReconnectOnClose()
+  
   runtime.GOMAXPROCS(num_cpus)
   
 	fan, err := fanotify.Initialize(fanotify.FAN_CLASS_NOTIF, fanotify.FAN_CLOEXEC)
@@ -86,16 +93,10 @@ func main() {
   channel := make(chan *fanotify.EventMetadata)
   
   for i := 0; i < num_routines; i++ {
-    go clamavWorker(channel, cache, i)
-  }
-
-
-  // conn.SetupAMQPBroker()
-  // go conn.ReconnectOnClose()
-  // defer conn.Close()
-  // 
-  // msg := utils.Graylog2ParseLog("Starting")
-  // conn.SendAMQP(msg)
+    go clamavWorker(channel, cache, conn, i)
+  } 
+  
+  utils.DebugAMQP("AKSJAKSJKAJSKASJK", conn, true) 
 
 	for {
 		ev, err := fan.GetEvent()
@@ -106,4 +107,5 @@ func main() {
       continue
     }
 	}
+  defer conn.Close()
 }
