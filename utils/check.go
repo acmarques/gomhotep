@@ -26,8 +26,41 @@ import (
 
 var (
 	_log, s_err = syslog.New(syslog.LOG_ERR, "gomhotep")
-  conn AMQPConnection
 )
+
+type Logger struct {
+  amqpEnabled bool
+	conn AMQPConnection
+}
+
+func (l *Logger) SetupLogger(amqpEnabled bool){
+  l.amqpEnabled = amqpEnabled
+  
+  if l.amqpEnabled{
+    l.conn.SetupAMQPBroker()
+    go l.conn.ReconnectOnClose()
+    //defer l.conn.Close()
+  }
+}
+
+func (l *Logger) Log(message string) {
+  fmt.Println(message)
+  if l.amqpEnabled{
+    msg := Graylog2ParseLog(message)
+    go l.conn.SendAMQP(msg)  
+  }
+}
+
+func (l *Logger) Debug(message string, debug bool) {
+	if debug {
+    fmt.Println(message)
+    if l.amqpEnabled{
+      msg := Graylog2ParseLog(message)
+      go l.conn.SendAMQP(msg)  
+    }
+	}
+}
+
 
 func Check(err error, message string) {
 	check(err, message, false)
@@ -36,30 +69,6 @@ func Check(err error, message string) {
 func CheckPanic(err error, message string) {
 	check(err, message, true)
 }
-
-func Log(message string) {
-  fmt.Println(message)
-  // CheckPanic(s_err, "Unable to write syslog message")
-  // _log.Info(message)
-  // defer _log.Close()
-}
-
-func Debug(message string, debug bool) {
-	if debug {
-    fmt.Println(message)
-    // CheckPanic(s_err, "Unable to write syslog message")
-    // _log.Debug(message)
-    // defer _log.Close()
-	}
-}
-
-func DebugAMQP(message string, conn AMQPConnection, debug bool) {
-	if debug {
-    msg := Graylog2ParseLog(message)
-    go conn.SendAMQP(msg)  
-	}
-}
-
 
 func check(err error, message string, _panic bool) {
 	if err != nil {
