@@ -3,26 +3,31 @@ log:
 scan:
   # Max number of cpus to use on scanning
   num_cpus: 2
-    
+
   # Number of scanning processes
   num_routines: 3
 
   # Mount point to monitor with fanotify.
-  # Note that events on the whole mount point will get scanned
-  mount_point: /home/ncode
+  # Note that events on any files on the mount point will be scanned
+  mount_point: /tmp/gohmotep
 
   # Max file size to scan in bytes
   av_max_file_size: 2097152
 
   # Options are ALERT, MOVE or REMOVE
-  av_action_when_malware_found: MOVE
+  #
+  # ALERT: displays message whenever malware is found. No further action is taken
+  # MOVE: displays message whenever malware is found and moves files to 'av_move_to_base_folder' path
+  # REMOVE: displays message whenever malware is found and deletes file.
+  av_action_when_malware_found: ALERT
   # If av_action_when_malware_found is MOVE, specify base path
-  av_move_to_base_folder: /home/quarantines/
-amqp:  
-    # Set True to log on syslog AND AMPQ server
+  # IMPORTANT: 'av_move_to_base_folder' needs to be on a different mount point from 'mount_point'
+  av_move_to_base_folder: /quarantines/
+amqp:
+    # Set to true to log whenever malware is found both on syslog AND AMPQ server
     amqp_enabled: true
     # AMQP server listening URL
-    amqp_url: 'amqp://imhotep:imhotep@10.20.81.38:5672'
-    amqp_queue: 'imhotep'
+    amqp_url: 'amqp://gohotep:gohotep@server:5672'
+    amqp_queue: 'gohotep'
     message_ttl: 90000
-    hostname: "hmteste" 
+    hostname: "hmteste"

@@ -19,7 +19,7 @@ package utils
 
 import (
 	"encoding/json"
-	"github.com/streadway/amqp"
+	"github.com/evanphx/amqp"
 	"sync"
 	"time"
   "strconv"
@@ -65,7 +65,7 @@ func Graylog2ParseLog(line string) Graylog2Parsed {
   	parsed.Timestamp = now.Unix()
   	parsed.Version = "1.0"
   	parsed.Host = hostname
-  	
+
 		parsed.Facility = "gomhotep"
 		parsed.Level = 6
 		parsed.ShortMessage = line
