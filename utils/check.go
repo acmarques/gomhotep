@@ -19,23 +19,23 @@
 package utils
 
 import (
-	"fmt"
-	"log"
-	"log/syslog"
+  "fmt"
+  "log"
+  "log/syslog"
 )
 
 var (
-	_log, s_err = syslog.New(syslog.LOG_ERR, "gomhotep")
+  _log, s_err = syslog.New(syslog.LOG_ERR, "gomhotep")
 )
 
 type Logger struct {
   amqpEnabled bool
-	conn AMQPConnection
+  conn AMQPConnection
 }
 
 func (l *Logger) SetupLogger(amqpEnabled bool){
   l.amqpEnabled = amqpEnabled
-  
+
   if l.amqpEnabled{
     l.conn.SetupAMQPBroker()
     go l.conn.ReconnectOnClose()
@@ -47,40 +47,40 @@ func (l *Logger) Log(message string) {
   fmt.Println(message)
   if l.amqpEnabled{
     msg := Graylog2ParseLog(message)
-    go l.conn.SendAMQP(msg)  
+    go l.conn.SendAMQP(msg)
   }
 }
 
 func (l *Logger) Debug(message string, debug bool) {
-	if debug {
+  if debug {
     fmt.Println(message)
     if l.amqpEnabled{
       msg := Graylog2ParseLog(message)
-      go l.conn.SendAMQP(msg)  
+      go l.conn.SendAMQP(msg)
     }
-	}
+  }
 }
 
 
 func Check(err error, message string) {
-	check(err, message, false)
+  check(err, message, false)
 }
 
 func CheckPanic(err error, message string) {
-	check(err, message, true)
+  check(err, message, true)
 }
 
 func check(err error, message string, _panic bool) {
-	if err != nil {
-		msg := fmt.Sprintf("%s: %s", message, err)
-		if s_err != nil {
-			log.Fatalln("Unable to write syslog message")
-		}
-		_log.Warning(msg)
-		defer _log.Close()
-		log.Fatalln(msg)
-		if _panic {
-			panic(msg)
-		}
-	}
+  if err != nil {
+    msg := fmt.Sprintf("%s: %s", message, err)
+    if s_err != nil {
+      log.Fatalln("Unable to write syslog message")
+    }
+    _log.Warning(msg)
+    defer _log.Close()
+    log.Fatalln(msg)
+    if _panic {
+      panic(msg)
+    }
+  }
 }

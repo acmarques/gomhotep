@@ -1,17 +1,17 @@
 package main
 
 import (
-	"./fanotify"
-	"./utils"
-	"./clamav"
-	"fmt"
+  "./fanotify"
+  "./utils"
+  "./clamav"
+  "fmt"
   "strconv"
   "runtime"
   gocache "github.com/pmylund/go-cache"
 )
 
 const (
-	AT_FDCWD = -100
+  AT_FDCWD = -100
 )
 
 var (
@@ -38,11 +38,11 @@ func clamavWorker(in chan *fanotify.EventMetadata, cache *gocache.Cache, number 
   log.Debug(fmt.Sprintf("[%d] initializing ClamAV database...", number), debug)
 
   engine := clamav.New()
-	sigs, err := engine.Load(clamav.DBDir(), clamav.DbStdopt)
+  sigs, err := engine.Load(clamav.DBDir(), clamav.DbStdopt)
   utils.CheckPanic(err, fmt.Sprintf("can not initialize ClamAV engine: %v", err))
 
   engine.Compile()
-	log.Debug(fmt.Sprintf("loaded %d signatures", sigs), debug)
+  log.Debug(fmt.Sprintf("loaded %d signatures", sigs), debug)
 
 
   for ev := range in {
@@ -54,8 +54,8 @@ func clamavWorker(in chan *fanotify.EventMetadata, cache *gocache.Cache, number 
       cache.Set(fmt.Sprintf("%d", ev.InodeNumber), 1, -1)
 
       log.Debug(fmt.Sprintf("[%d] Scanning %s...", number, ev.FileName), debug)
-  		virus, _, err := engine.ScanFile(ev.FileName, clamav.ScanStdopt)
-  		if virus != "" {
+      virus, _, err := engine.ScanFile(ev.FileName, clamav.ScanStdopt)
+      if virus != "" {
         log.Log(fmt.Sprintf("[%d] malware found in %s: %s", number, ev.FileName, virus))
         if av_action == "MOVE"{
           err := utils.MoveFile(ev.FileName, av_quarantine_dir, log)
@@ -69,7 +69,7 @@ func clamavWorker(in chan *fanotify.EventMetadata, cache *gocache.Cache, number 
           }
         }
 
-  		} else if err != nil {
+      } else if err != nil {
         log.Debug(fmt.Sprintf("[%d] Error scanning file %s: %v", number, ev.FileName, err), debug)
         cache.Delete(fmt.Sprintf("%d", ev.InodeNumber))
         continue
@@ -84,9 +84,9 @@ func main() {
 
   runtime.GOMAXPROCS(num_cpus)
 
-	fan, err := fanotify.Initialize(fanotify.FAN_CLASS_NOTIF, fanotify.FAN_CLOEXEC)
-	utils.CheckPanic(err, "Unable to listen fanotify")
-	fan.Mark(fanotify.FAN_MARK_ADD|fanotify.FAN_MARK_MOUNT, fanotify.FAN_CLOSE, AT_FDCWD, av_mount_point)
+  fan, err := fanotify.Initialize(fanotify.FAN_CLASS_NOTIF, fanotify.FAN_CLOEXEC)
+  utils.CheckPanic(err, "Unable to listen fanotify")
+  fan.Mark(fanotify.FAN_MARK_ADD|fanotify.FAN_MARK_MOUNT, fanotify.FAN_CLOSE, AT_FDCWD, av_mount_point)
 
   cache := gocache.New(0, 0)
   channel := make(chan *fanotify.EventMetadata)
@@ -95,14 +95,14 @@ func main() {
     go clamavWorker(channel, cache, i)
   }
 
-	for {
-		ev, err := fan.GetEvent()
+  for {
+    ev, err := fan.GetEvent()
     if err == nil {
       channel <- ev
     } else {
       log.Debug(fmt.Sprintf("Fanotify error: %v", err), debug)
       continue
     }
-	}
+  }
 
 }
